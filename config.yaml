@@ -7,10 +7,8 @@ disqusShortname: ''
 params:
   banner:
     buttonText: Get Started
-    subtitle: |-
-      #A RESPONSIVE SITE TEMPLATE DESIGNED BY HTML5 UP
-      #AND RELEASED UNDER THE CREATIVE COMMONS.
-    title: Hi, My name is Thirat (Pon) Wongwaisaywan.
+    subtitle: My website Portfolio
+    title: Thirat (Pon) Wongwaisaywan's Portfolio
   blog: {}
   contact:
     address:
@@ -91,8 +89,8 @@ params:
         url: blogs/tempus
       - image: pic03.jpg
         subtitle: Lorem Etiam Nullam
-        title: Magna
-        url: blogs/magna
+        title: IMDB dataset
+        url: blogs/IMDB
       - image: pic04.jpg
         subtitle: Nisl Sed Aliquam
         title: Ipsum
