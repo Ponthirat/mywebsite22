@@ -1,0 +1,124 @@
+---
+categories:  
+- ""    #the front matter should be like the one found in, e.g., blog2.md. It cannot be like the normal Rmd we used
+- ""
+date: "2021-09-30"
+description: Risk-Return of DJIA stocks # the title that will show up once someone gets to this page
+draft: false
+image: spices.jpg # save picture in \static\img\blogs. Acceptable formats= jpg, jpeg, or png . Your iPhone pics wont work
+
+keywords: ""
+slug: IMDB # slug is the shorthand URL address... no spaces plz
+title: Analysis of IMDB Dataset
+---
+
+
+```{r, setup, echo=FALSE}
+knitr::opts_chunk$set(
+  message = FALSE, 
+  warning = FALSE, 
+  tidy=FALSE,     # display code as typed
+  size="small")   # slightly smaller font for code
+options(digits = 3)
+# default figure size
+knitr::opts_chunk$set(
+  fig.width=6.75, 
+  fig.height=6.75,
+  fig.align = "center"
+)
+```
+
+```{r load-libraries, warning=FALSE, message=FALSE, echo=FALSE}
+library(tidyverse)  # Load ggplot2, dplyr, and all the other tidyverse packages
+library(lubridate)
+library(here)
+library(skimr)
+library(janitor)
+library(vroom)
+library(tidyquant)
+library(rvest)    # scrape websites
+library(purrr)  
+library(lubridate) #to handle dates
+library(ggrepel)
+```
+
+# Analysis of movies - IMDB dataset
+
+```{r,load_movies}
+movies <- read.csv(here::here("data", "movies.csv"))
+
+```
+
+## Data Cleaning
+Firstly, we must inspect the data to see if there are missing values.
+```{r count_NA, warning=FALSE, message=FALSE, eval=FALSE}
+count_NA <- sum(is.na(movies)) #counting all the NAs
+count_NA
+duplicated_count <- sum(duplicated(movies)) #counting all the duplicated
+duplicated_count
+```
+
+
+## Table 1: Showing the count of movies by genre.
+```{r table}
+movie_table<- movies %>%
+  group_by(genre) %>% 
+  count(genre) #grouping by genre, then counting.
+arrange(movie_table, desc(n))
+```
+
+## Table 2: Return on Budget
+
+```{r table_2}
+movies %>% 
+  group_by(genre) %>% 
+  summarize(return_on_budget = (mean(gross)/mean(budget))) %>%  #creating a new column called return_on _budget
+  arrange(desc(return_on_budget))
+  
+```
+We can see that Musical has the highest return on budget at 28.9, followed by Family which had a return on budget at 10.1. Whereas Thriller has the least return on budget at 0.0008.
+
+## Table 3: Table Ranking Directors with the highest gross revenue
+```{r Table_3}
+movies %>% 
+  group_by(director) %>% 
+  summarize(sum = sum(gross),
+            mean = mean(gross), 
+            median = median(gross), 
+            std = sd(gross)) %>% 
+  arrange(desc(sum)) %>%
+  slice_head(n = 15)
+```
+
+## Relationship between Variables
+
+```{r, gross_on_fblikes}
+ggplot(movies, aes(x=cast_facebook_likes, y=gross))+ 
+  geom_point() +
+  scale_x_log10() +
+  geom_smooth(method ='lm')
+```
+We put "cast_facebook_likes" into the X axis and "gross" to the Y axis. There is a slight positive correlation between 'gross' and 'cast_facebook_like', although there exist many outliers, such as when likes is less than 100. Therefore, the cast is not likely to be a good predictor. However, many data points lies outside the a line of best fit, therefore, we cannot say with good confidence that it is a good predictor.
+
+```{r, gross_on_budget}
+  ggplot(movies, aes(x=budget, y=gross))+ 
+  geom_point() + 
+  geom_smooth(method='lm', se=FALSE)+ 
+  scale_x_log10() + 
+  labs(title='relationship between budget and gross')
+```
+Budget appears to be a good predictor of grossing, since the graph shows shows a positive correlation. Although when the budget is less than 1 million dollars, it is not a good predictor.
+
+
+```{r, gross_on_rating}
+  ggplot(movies, aes(x=rating, y=gross))+ 
+  geom_point() +
+  geom_smooth(method='lm')+ 
+  scale_x_log10() + 
+  facet_wrap(~genre) + 
+  theme_minimal() + 
+  labs(title = 'Relationship between Rating and Gross for each genre')
+```
+Generally, some genre have much more rating than others,for instance, crime, documentary, and mystery. The others, however, have significantly less reviews. For those with high numbers of reviews, such as Action, Adventure, there exist positive correlation between gross and rating which makes IMDB rating a good predictor for those movies.
+
+

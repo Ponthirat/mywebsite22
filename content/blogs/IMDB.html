@@ -1,0 +1,138 @@
+---
+categories:  
+- ""    #the front matter should be like the one found in, e.g., blog2.md. It cannot be like the normal Rmd we used
+- ""
+date: "2021-09-30"
+description: Risk-Return of DJIA stocks # the title that will show up once someone gets to this page
+draft: false
+image: spices.jpg # save picture in \static\img\blogs. Acceptable formats= jpg, jpeg, or png . Your iPhone pics wont work
+
+keywords: ""
+slug: IMDB # slug is the shorthand URL address... no spaces plz
+title: Analysis of IMDB Dataset
+---
+
+
+
+<div id="analysis-of-movies---imdb-dataset" class="section level1">
+<h1>Analysis of movies - IMDB dataset</h1>
+<pre class="r"><code>movies &lt;- read.csv(here::here(&quot;data&quot;, &quot;movies.csv&quot;))</code></pre>
+<div id="data-cleaning" class="section level2">
+<h2>Data Cleaning</h2>
+<p>Firstly, we must inspect the data to see if there are missing values.</p>
+<pre class="r"><code>count_NA &lt;- sum(is.na(movies)) #counting all the NAs
+count_NA
+duplicated_count &lt;- sum(duplicated(movies)) #counting all the duplicated
+duplicated_count</code></pre>
+</div>
+<div id="table-1-showing-the-count-of-movies-by-genre." class="section level2">
+<h2>Table 1: Showing the count of movies by genre.</h2>
+<pre class="r"><code>movie_table&lt;- movies %&gt;%
+  group_by(genre) %&gt;% 
+  count(genre) #grouping by genre, then counting.
+arrange(movie_table, desc(n))</code></pre>
+<pre><code>## # A tibble: 17 × 2
+## # Groups:   genre [17]
+##    genre           n
+##    &lt;chr&gt;       &lt;int&gt;
+##  1 Comedy        848
+##  2 Action        738
+##  3 Drama         498
+##  4 Adventure     288
+##  5 Crime         202
+##  6 Biography     135
+##  7 Horror        131
+##  8 Animation      35
+##  9 Fantasy        28
+## 10 Documentary    25
+## 11 Mystery        16
+## 12 Sci-Fi          7
+## 13 Family          3
+## 14 Musical         2
+## 15 Romance         2
+## 16 Western         2
+## 17 Thriller        1</code></pre>
+</div>
+<div id="table-2-return-on-budget" class="section level2">
+<h2>Table 2: Return on Budget</h2>
+<pre class="r"><code>movies %&gt;% 
+  group_by(genre) %&gt;% 
+  summarize(return_on_budget = (mean(gross)/mean(budget))) %&gt;%  #creating a new column called return_on _budget
+  arrange(desc(return_on_budget))</code></pre>
+<pre><code>## # A tibble: 17 × 2
+##    genre       return_on_budget
+##    &lt;chr&gt;                  &lt;dbl&gt;
+##  1 Musical             28.9    
+##  2 Family              10.1    
+##  3 Western              6.01   
+##  4 Documentary          2.95   
+##  5 Horror               2.79   
+##  6 Fantasy              2.41   
+##  7 Comedy               1.74   
+##  8 Mystery              1.72   
+##  9 Animation            1.60   
+## 10 Biography            1.58   
+## 11 Adventure            1.45   
+## 12 Drama                1.43   
+## 13 Crime                1.41   
+## 14 Romance              1.25   
+## 15 Action               1.21   
+## 16 Sci-Fi               1.08   
+## 17 Thriller             0.00823</code></pre>
+<p>We can see that Musical has the highest return on budget at 28.9, followed by Family which had a return on budget at 10.1. Whereas Thriller has the least return on budget at 0.0008.</p>
+</div>
+<div id="table-3-table-ranking-directors-with-the-highest-gross-revenue" class="section level2">
+<h2>Table 3: Table Ranking Directors with the highest gross revenue</h2>
+<pre class="r"><code>movies %&gt;% 
+  group_by(director) %&gt;% 
+  summarize(sum = sum(gross),
+            mean = mean(gross), 
+            median = median(gross), 
+            std = sd(gross)) %&gt;% 
+  arrange(desc(sum)) %&gt;%
+  slice_head(n = 15)</code></pre>
+<pre><code>## # A tibble: 15 × 5
+##    director                 sum       mean     median        std
+##    &lt;chr&gt;                  &lt;dbl&gt;      &lt;dbl&gt;      &lt;dbl&gt;      &lt;dbl&gt;
+##  1 Steven Spielberg  4014061704 174524422. 164435221  101421051.
+##  2 Michael Bay       2231242537 171634041. 138396624  127161579.
+##  3 Tim Burton        2071275480 129454718.  76519172  108726924.
+##  4 Sam Raimi         2014600898 201460090. 234903076  162126632.
+##  5 James Cameron     1909725910 318287652. 175562880. 309171337.
+##  6 Christopher Nolan 1813227576 226653447  196667606. 187224133.
+##  7 George Lucas      1741418480 348283696  380262555  146193880.
+##  8 Robert Zemeckis   1619309108 124562239. 100853835   91300279.
+##  9 Clint Eastwood    1378321100  72543216.  46700000   75487408.
+## 10 Francis Lawrence  1358501971 271700394. 281666058  135437020.
+## 11 Ron Howard        1335988092 111332341  101587923   81933761.
+## 12 Gore Verbinski    1329600995 189942999. 123207194  154473822.
+## 13 Andrew Adamson    1137446920 284361730  279680930. 120895765.
+## 14 Shawn Levy        1129750988 102704635.  85463309   65484773.
+## 15 Ridley Scott      1128857598  80632686.  47775715   68812285.</code></pre>
+</div>
+<div id="relationship-between-variables" class="section level2">
+<h2>Relationship between Variables</h2>
+<pre class="r"><code>ggplot(movies, aes(x=cast_facebook_likes, y=gross))+ 
+  geom_point() +
+  scale_x_log10() +
+  geom_smooth(method =&#39;lm&#39;)</code></pre>
+<p><img src="/blogs/IMDB_files/figure-html/gross_on_fblikes-1.png" width="648" style="display: block; margin: auto;" />
+We put “cast_facebook_likes” into the X axis and “gross” to the Y axis. There is a slight positive correlation between ‘gross’ and ‘cast_facebook_like’, although there exist many outliers, such as when likes is less than 100. Therefore, the cast is not likely to be a good predictor. However, many data points lies outside the a line of best fit, therefore, we cannot say with good confidence that it is a good predictor.</p>
+<pre class="r"><code>  ggplot(movies, aes(x=budget, y=gross))+ 
+  geom_point() + 
+  geom_smooth(method=&#39;lm&#39;, se=FALSE)+ 
+  scale_x_log10() + 
+  labs(title=&#39;relationship between budget and gross&#39;)</code></pre>
+<p><img src="/blogs/IMDB_files/figure-html/gross_on_budget-1.png" width="648" style="display: block; margin: auto;" />
+Budget appears to be a good predictor of grossing, since the graph shows shows a positive correlation. Although when the budget is less than 1 million dollars, it is not a good predictor.</p>
+<pre class="r"><code>  ggplot(movies, aes(x=rating, y=gross))+ 
+  geom_point() +
+  geom_smooth(method=&#39;lm&#39;)+ 
+  scale_x_log10() + 
+  facet_wrap(~genre) + 
+  theme_minimal() + 
+  labs(title = &#39;Relationship between Rating and Gross for each genre&#39;)</code></pre>
+<p><img src="/blogs/IMDB_files/figure-html/gross_on_rating-1.png" width="648" style="display: block; margin: auto;" />
+Generally, some genre have much more rating than others,for instance, crime, documentary, and mystery. The others, however, have significantly less reviews. For those with high numbers of reviews, such as Action, Adventure, there exist positive correlation between gross and rating which makes IMDB rating a good predictor for those movies.</p>
+</div>
+</div>
