@@ -40,6 +40,14 @@ library(rvest)    # scrape websites
 library(purrr)  
 library(lubridate) #to handle dates
 library(ggrepel)
+library(tidyverse)  # Load ggplot2, dplyr, and all the other tidyverse packages
+library(mosaic)
+library(ggthemes)
+library(GGally)
+library(readxl)
+library(broom)
+library(infer)
+library(openintro)
 ```
 
 # Analysis of movies - IMDB dataset
@@ -120,5 +128,58 @@ Budget appears to be a good predictor of grossing, since the graph shows shows a
   labs(title = 'Relationship between Rating and Gross for each genre')
 ```
 Generally, some genre have much more rating than others,for instance, crime, documentary, and mystery. The others, however, have significantly less reviews. For those with high numbers of reviews, such as Action, Adventure, there exist positive correlation between gross and rating which makes IMDB rating a good predictor for those movies.
+
+## Analysis of Directors
+```{r movies}
+movies_2 <- movies %>% 
+  group_by(director) %>% 
+  filter(director %in% c("Steven Spielberg","Tim Burton")) %>% 
+  summarise(rating,mean_rating = mean(rating), #find datapoints needed for t distribution.
+         sd_rating = sd(rating),
+         count=n(),
+         t_critical =qt(0.975,count-1),
+         se_rating = sd(rating)/sqrt(count),
+         margin_of_error = t_critical*se_rating, 
+         rating_low = mean_rating - margin_of_error, 
+         rating_high = mean_rating +margin_of_error,
+         highest_rating =max(rating),
+         lowest_rating = min(rating))
+
+#movies_mean<-count(movies, mean_rating) 
+#movies_mean
+movies_2
+
+  ggplot(movies_2, aes(x = mean_rating,y = director))+
+  geom_point() +
+  geom_errorbar(data = movies_2,aes(xmin = rating_low, xmax=rating_high,height=0.2))+
+  labs(x = "Mean IMDB Rating",title = "Do Spielburg and Burton have the same mean IMDB rating",subtitle="95% confidence interval overlap")+
+    geom_rect(aes(xmin=7.27, xmax= 7.34, ymin=-Inf, ymax=Inf),
+            fill = "grey50",
+            colour = NA,
+            alpha = 0.2)
+```
+
+```{r}
+t.test(rating~director, data = movies_2) #find t-stat, p-value
+
+#simulating a null world using infer()
+set.seed(1234)
+ratings_in_null_world <- movies_2 %>%
+  specify(rating~director) %>% # we want to look at ratings of directors
+  hypothesize(null = "independence") %>%  # hypothesize that the difference is 0
+  generate(reps=1000, type="permute") %>% # create a bunch of simulated samples
+  calculate(stat="diff in means", order = c("Steven Spielberg","Tim Burton")) # find difference in means of each sample. 
+
+#ratings_in_null_world visualize, with shaded p value
+ratings_in_null_world %>% visualize() +
+  shade_p_value(obs_stat = 0.64, direction = "two-sided")
+
+ # finding p-value of simulated distribution
+p_value <- ratings_in_null_world%>%
+  get_p_value(obs_stat = .64, direction = "two-sided")
+p_value
+
+```
+
 
 
