@@ -79,7 +79,7 @@ params:
   tiles:
     enable: yes
     showcase:
-      - image: pic01.jpg
+      - image: lbs.jpg
         subtitle: Ipsum Dolor Sit Amet
         title: Aliquam
         url: blogs/aliquam
@@ -87,7 +87,7 @@ params:
         subtitle: Feugiat Amet Tempus
         title: Tempus
         url: blogs/tempus
-      - image: pic03.jpg
+      - image: avengers.jpg
         subtitle: Lorem Etiam Nullam
         title: IMDB dataset
         url: blogs/IMDB
