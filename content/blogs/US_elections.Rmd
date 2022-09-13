@@ -61,23 +61,64 @@ CA_contributions <- vroom::vroom(here::here("data","CA_contributors_2016.csv"))
 
 zipcodes<- vroom::vroom(here::here("data","zip_code_database.csv"))
 
+```
+
+```{r}
+
 CA_contributions$zip<- as.character(CA_contributions$zip)
 
 CA_contributions_2016 <- left_join(CA_contributions, zipcodes, by="zip")
 
-CA_contri_HC<- CA_contributions_2016 %>% filter(contb_date>"2015-12-31", cand_nm == c("Clinton, Hillary Rodham" )) %>% group_by(cand_nm, primary_city) %>% summarize(fund_per_city=sum(contb_receipt_amt)) %>% arrange(desc(fund_per_city))%>% slice_max(order_by = fund_per_city, n=10) 
+```
 
-CA_contri_DT<- CA_contributions_2016 %>% filter(contb_date>"2015-12-31", cand_nm == c("Trump, Donald J.")) %>% group_by(cand_nm, primary_city) %>% summarize(fund_per_city=sum(contb_receipt_amt)) %>% arrange(desc(fund_per_city))%>% slice_max(order_by = fund_per_city, n=10)
+```{r contri_HC}
+CA_contri_HC<- CA_contributions_2016 %>% 
+  filter(contb_date>"2015-12-31", cand_nm == c("Clinton, Hillary Rodham" )) %>% 
+  group_by(cand_nm, primary_city) %>% 
+  summarize(fund_per_city=sum(contb_receipt_amt)) %>% 
+  arrange(desc(fund_per_city))%>% 
+  slice_max(order_by = fund_per_city, n=10) 
+```
 
-HC_graph<- ggplot(CA_contri_HC, aes(x=fund_per_city, y=reorder(primary_city, fund_per_city)))+geom_col(width = 0.5, fill = "dark blue")+theme_minimal(base_size=10)+
-  ggtitle("Clinton, Hillary Rodham")+theme(aspect.ratio = 1/1)
+```{r HC_graph}
+HC_graph<- ggplot(CA_contri_HC, 
+                  aes(x=fund_per_city, 
+                      y=reorder(primary_city, fund_per_city)))+
+  geom_col(width = 0.5, fill = "dark blue")+
+  theme_minimal(base_size=10)+
+  ggtitle("Clinton, Hillary Rodham")+
+  theme(aspect.ratio = 1/1)
 
-DT_graph<- ggplot(CA_contri_DT, aes(x=fund_per_city, y=reorder(primary_city, fund_per_city)))+geom_col(width = 0.5, fill = "red",position = position_dodge(0.1))+theme_minimal(base_size=10)+ggtitle("Trump, Donald J.")+theme(aspect.ratio = 1/1)
+HC_graph
 ```
 
 
+```{r contri_DT}
+CA_contri_DT<- CA_contributions_2016 %>% 
+  filter(contb_date>"2015-12-31", cand_nm == c("Trump, Donald J.")) %>% 
+  group_by(cand_nm, primary_city) %>% 
+  summarize(fund_per_city=sum(contb_receipt_amt)) %>% 
+  arrange(desc(fund_per_city))%>% 
+  slice_max(order_by = fund_per_city, n=10)
+```
+
+```{r DT_graph}
+
+DT_graph<- ggplot(CA_contri_DT, 
+                  aes(x=fund_per_city, 
+                      y=reorder(primary_city, fund_per_city)))+
+  geom_col(width = 0.5, fill = "red",position = position_dodge(0.1))+
+  theme_minimal(base_size=10)+
+  ggtitle("Trump, Donald J.")+
+  theme(aspect.ratio = 1/1)
+DT_graph
+```
+
+## Joining both plots
+
 ```{r, load_CA_data_2, warnings= FALSE, message=FALSE}
-HC_graph+DT_graph+plot_annotation(title = "Where did candidates raise most money")
+HC_graph+DT_graph+
+  plot_annotation(title = "Where did candidates raise most money")
 ```
 
 ## Biden's Approval Margins 

@@ -22,21 +22,46 @@ title: US elections
 <pre class="r"><code># Make sure you use vroom() as it is significantly faster than read.csv()
 CA_contributions &lt;- vroom::vroom(here::here(&quot;data&quot;,&quot;CA_contributors_2016.csv&quot;))
 
-zipcodes&lt;- vroom::vroom(here::here(&quot;data&quot;,&quot;zip_code_database.csv&quot;))
+zipcodes&lt;- vroom::vroom(here::here(&quot;data&quot;,&quot;zip_code_database.csv&quot;))</code></pre>
+<pre class="r"><code>CA_contributions$zip&lt;- as.character(CA_contributions$zip)
 
-CA_contributions$zip&lt;- as.character(CA_contributions$zip)
+CA_contributions_2016 &lt;- left_join(CA_contributions, zipcodes, by=&quot;zip&quot;)</code></pre>
+<pre class="r"><code>CA_contri_HC&lt;- CA_contributions_2016 %&gt;% 
+  filter(contb_date&gt;&quot;2015-12-31&quot;, cand_nm == c(&quot;Clinton, Hillary Rodham&quot; )) %&gt;% 
+  group_by(cand_nm, primary_city) %&gt;% 
+  summarize(fund_per_city=sum(contb_receipt_amt)) %&gt;% 
+  arrange(desc(fund_per_city))%&gt;% 
+  slice_max(order_by = fund_per_city, n=10) </code></pre>
+<pre class="r"><code>HC_graph&lt;- ggplot(CA_contri_HC, 
+                  aes(x=fund_per_city, 
+                      y=reorder(primary_city, fund_per_city)))+
+  geom_col(width = 0.5, fill = &quot;dark blue&quot;)+
+  theme_minimal(base_size=10)+
+  ggtitle(&quot;Clinton, Hillary Rodham&quot;)+
+  theme(aspect.ratio = 1/1)
 
-CA_contributions_2016 &lt;- left_join(CA_contributions, zipcodes, by=&quot;zip&quot;)
-
-CA_contri_HC&lt;- CA_contributions_2016 %&gt;% filter(contb_date&gt;&quot;2015-12-31&quot;, cand_nm == c(&quot;Clinton, Hillary Rodham&quot; )) %&gt;% group_by(cand_nm, primary_city) %&gt;% summarize(fund_per_city=sum(contb_receipt_amt)) %&gt;% arrange(desc(fund_per_city))%&gt;% slice_max(order_by = fund_per_city, n=10) 
-
-CA_contri_DT&lt;- CA_contributions_2016 %&gt;% filter(contb_date&gt;&quot;2015-12-31&quot;, cand_nm == c(&quot;Trump, Donald J.&quot;)) %&gt;% group_by(cand_nm, primary_city) %&gt;% summarize(fund_per_city=sum(contb_receipt_amt)) %&gt;% arrange(desc(fund_per_city))%&gt;% slice_max(order_by = fund_per_city, n=10)
-
-HC_graph&lt;- ggplot(CA_contri_HC, aes(x=fund_per_city, y=reorder(primary_city, fund_per_city)))+geom_col(width = 0.5, fill = &quot;dark blue&quot;)+theme_minimal(base_size=10)+
-  ggtitle(&quot;Clinton, Hillary Rodham&quot;)+theme(aspect.ratio = 1/1)
-
-DT_graph&lt;- ggplot(CA_contri_DT, aes(x=fund_per_city, y=reorder(primary_city, fund_per_city)))+geom_col(width = 0.5, fill = &quot;red&quot;,position = position_dodge(0.1))+theme_minimal(base_size=10)+ggtitle(&quot;Trump, Donald J.&quot;)+theme(aspect.ratio = 1/1)</code></pre>
-<pre class="r"><code>HC_graph+DT_graph+plot_annotation(title = &quot;Where did candidates raise most money&quot;)</code></pre>
+HC_graph</code></pre>
+<p><img src="/blogs/US_elections_files/figure-html/HC_graph-1.png" width="648" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>CA_contri_DT&lt;- CA_contributions_2016 %&gt;% 
+  filter(contb_date&gt;&quot;2015-12-31&quot;, cand_nm == c(&quot;Trump, Donald J.&quot;)) %&gt;% 
+  group_by(cand_nm, primary_city) %&gt;% 
+  summarize(fund_per_city=sum(contb_receipt_amt)) %&gt;% 
+  arrange(desc(fund_per_city))%&gt;% 
+  slice_max(order_by = fund_per_city, n=10)</code></pre>
+<pre class="r"><code>DT_graph&lt;- ggplot(CA_contri_DT, 
+                  aes(x=fund_per_city, 
+                      y=reorder(primary_city, fund_per_city)))+
+  geom_col(width = 0.5, fill = &quot;red&quot;,position = position_dodge(0.1))+
+  theme_minimal(base_size=10)+
+  ggtitle(&quot;Trump, Donald J.&quot;)+
+  theme(aspect.ratio = 1/1)
+DT_graph</code></pre>
+<p><img src="/blogs/US_elections_files/figure-html/DT_graph-1.png" width="648" style="display: block; margin: auto;" /></p>
+</div>
+<div id="joining-both-plots" class="section level2">
+<h2>Joining both plots</h2>
+<pre class="r"><code>HC_graph+DT_graph+
+  plot_annotation(title = &quot;Where did candidates raise most money&quot;)</code></pre>
 <p><img src="/blogs/US_elections_files/figure-html/load_CA_data_2-1.png" width="648" style="display: block; margin: auto;" /></p>
 </div>
 <div id="bidens-approval-margins" class="section level2">
