@@ -1,0 +1,110 @@
+---
+categories:  
+- ""    #the front matter should be like the one found in, e.g., blog2.md. It cannot be like the normal Rmd we used
+- ""
+date: "2021-09-30"
+description: Analysis of US elections # the title that will show up once someone gets to this page
+draft: false
+image: spices.jpg # save picture in \static\img\blogs. Acceptable formats= jpg, jpeg, or png . Your iPhone pics wont work
+
+keywords: ""
+slug: US # slug is the shorthand URL address... no spaces plz
+title: US elections
+---
+
+```{r, setup, echo=FALSE}
+knitr::opts_chunk$set(
+  message = FALSE, 
+  warning = FALSE, 
+  tidy=FALSE,     # display code as typed
+  size="small")   # slightly smaller font for code
+options(digits = 3)
+# default figure size
+knitr::opts_chunk$set(
+  fig.width=6.75, 
+  fig.height=6.75,
+  fig.align = "center"
+)
+```
+
+```{r load-libraries, warning=FALSE, message=FALSE, echo=FALSE}
+library(tidyverse)  # Load ggplot2, dplyr, and all the other tidyverse packages
+library(lubridate)
+library(here)
+library(skimr)
+library(janitor)
+library(vroom)
+library(tidyquant)
+library(rvest)    # scrape websites
+library(purrr)  
+library(lubridate) #to handle dates
+library(ggrepel)
+library(tidyverse)  # Load ggplot2, dplyr, and all the other tidyverse packages
+library(mosaic)
+library(ggthemes)
+library(GGally)
+library(readxl)
+library(broom)
+library(infer)
+library(openintro)
+library(patchwork)
+```
+
+## R Markdown
+
+
+## Including Plots
+
+```{r, load_CA_data, warnings= FALSE, message=FALSE}
+# Make sure you use vroom() as it is significantly faster than read.csv()
+CA_contributions <- vroom::vroom(here::here("data","CA_contributors_2016.csv"))
+
+zipcodes<- vroom::vroom(here::here("data","zip_code_database.csv"))
+
+CA_contributions$zip<- as.character(CA_contributions$zip)
+
+CA_contributions_2016 <- left_join(CA_contributions, zipcodes, by="zip")
+
+CA_contri_HC<- CA_contributions_2016 %>% filter(contb_date>"2015-12-31", cand_nm == c("Clinton, Hillary Rodham" )) %>% group_by(cand_nm, primary_city) %>% summarize(fund_per_city=sum(contb_receipt_amt)) %>% arrange(desc(fund_per_city))%>% slice_max(order_by = fund_per_city, n=10) 
+
+CA_contri_DT<- CA_contributions_2016 %>% filter(contb_date>"2015-12-31", cand_nm == c("Trump, Donald J.")) %>% group_by(cand_nm, primary_city) %>% summarize(fund_per_city=sum(contb_receipt_amt)) %>% arrange(desc(fund_per_city))%>% slice_max(order_by = fund_per_city, n=10)
+
+HC_graph<- ggplot(CA_contri_HC, aes(x=fund_per_city, y=reorder(primary_city, fund_per_city)))+geom_col(width = 0.5, fill = "dark blue")+theme_minimal(base_size=10)+
+  ggtitle("Clinton, Hillary Rodham")+theme(aspect.ratio = 1/1)
+
+DT_graph<- ggplot(CA_contri_DT, aes(x=fund_per_city, y=reorder(primary_city, fund_per_city)))+geom_col(width = 0.5, fill = "red",position = position_dodge(0.1))+theme_minimal(base_size=10)+ggtitle("Trump, Donald J.")+theme(aspect.ratio = 1/1)
+```
+
+
+```{r, load_CA_data_2, warnings= FALSE, message=FALSE}
+HC_graph+DT_graph+plot_annotation(title = "Where did candidates raise most money")
+```
+
+## Biden's Approval Margins 
+
+```{r Biden, cache=TRUE}
+approval_polllist <- read.csv('https://projects.fivethirtyeight.com/biden-approval-data/approval_polllist.csv') 
+
+approval_polllist <- approval_polllist %>% 
+  mutate(enddate = mdy(enddate), 
+         year = year(enddate),
+         month = month(enddate), #default format in r is year ymd
+         week = isoweek(enddate)) # using lubridate to change the format of the dates. 
+
+approval_polllist<- approval_polllist%>%
+  filter(year == 2022) %>% # filter to remove all other years other than 2022.
+  group_by(week, subgroup) %>% # grouping by week then subgroup, so that we can conitnue analysis
+  summarise(app_disapp = approve-disapprove, #finding the net ratings
+          mean_approve_disapprove = mean(app_disapp), # finding mean of net ratings
+          sd_rating = sd(app_disapp), # finding sd
+          count=n(), # counting number of polls in each week
+          t_critical=qt(0.975,count-1) , #t distribution, the bigger the sample count, the faster t_critical approach 1.96
+          se_approve_disapp = sd(app_disapp)/sqrt(count), # finding standard error
+          margin_of_error = t_critical*se_approve_disapp,  
+          rating_low = mean_approve_disapprove - margin_of_error, # make our ribbon bands
+          rating_high = mean_approve_disapprove+ margin_of_error 
+         )
+
+ggplot(approval_polllist, aes(x=week, y=mean_approve_disapprove))+geom_ribbon(aes( ymax = rating_high, ymin=rating_low, fill = subgroup))+ geom_line()+ facet_grid(rows = vars(subgroup)) + labs(x = 'Week in 2022', y ='', title = "Biden's Net Approval Ratings in 2022", subtitle = "Weekly Data, Approve - Disapprove, %")+ylim(-25,-5)+xlim(0,35)
+
+```
