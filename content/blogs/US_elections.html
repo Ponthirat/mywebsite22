@@ -14,24 +14,31 @@ title: US elections
 
 
 
-<div id="r-markdown" class="section level2">
-<h2>R Markdown</h2>
-</div>
-<div id="including-plots" class="section level2">
-<h2>Including Plots</h2>
+<div id="hilary-clinton-and-donal-trump" class="section level1">
+<h1>Hilary Clinton and Donal Trump</h1>
 <pre class="r"><code># Make sure you use vroom() as it is significantly faster than read.csv()
 CA_contributions &lt;- vroom::vroom(here::here(&quot;data&quot;,&quot;CA_contributors_2016.csv&quot;))
 
 zipcodes&lt;- vroom::vroom(here::here(&quot;data&quot;,&quot;zip_code_database.csv&quot;))</code></pre>
+<div id="hilary-clinton" class="section level2">
+<h2>Hilary Clinton</h2>
+<div id="assignment-of-variables" class="section level3">
+<h3>Assignment of Variables</h3>
 <pre class="r"><code>CA_contributions$zip&lt;- as.character(CA_contributions$zip)
 
 CA_contributions_2016 &lt;- left_join(CA_contributions, zipcodes, by=&quot;zip&quot;)</code></pre>
+</div>
+<div id="filtering-for-hilarry-clinton" class="section level3">
+<h3>Filtering for Hilarry Clinton</h3>
 <pre class="r"><code>CA_contri_HC&lt;- CA_contributions_2016 %&gt;% 
   filter(contb_date&gt;&quot;2015-12-31&quot;, cand_nm == c(&quot;Clinton, Hillary Rodham&quot; )) %&gt;% 
   group_by(cand_nm, primary_city) %&gt;% 
   summarize(fund_per_city=sum(contb_receipt_amt)) %&gt;% 
   arrange(desc(fund_per_city))%&gt;% 
   slice_max(order_by = fund_per_city, n=10) </code></pre>
+</div>
+<div id="plot-of-hilary-clintons-fund-per-city" class="section level3">
+<h3>Plot of Hilary CLinton’s fund per city</h3>
 <pre class="r"><code>HC_graph&lt;- ggplot(CA_contri_HC, 
                   aes(x=fund_per_city, 
                       y=reorder(primary_city, fund_per_city)))+
@@ -42,12 +49,18 @@ CA_contributions_2016 &lt;- left_join(CA_contributions, zipcodes, by=&quot;zip&q
 
 HC_graph</code></pre>
 <p><img src="/blogs/US_elections_files/figure-html/HC_graph-1.png" width="648" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+<div id="donald-trump" class="section level2">
+<h2>Donald Trump</h2>
 <pre class="r"><code>CA_contri_DT&lt;- CA_contributions_2016 %&gt;% 
   filter(contb_date&gt;&quot;2015-12-31&quot;, cand_nm == c(&quot;Trump, Donald J.&quot;)) %&gt;% 
   group_by(cand_nm, primary_city) %&gt;% 
   summarize(fund_per_city=sum(contb_receipt_amt)) %&gt;% 
   arrange(desc(fund_per_city))%&gt;% 
   slice_max(order_by = fund_per_city, n=10)</code></pre>
+<div id="plot-of-donald-trumps-fund-per-city" class="section level3">
+<h3>Plot of Donald Trump’s fund per city</h3>
 <pre class="r"><code>DT_graph&lt;- ggplot(CA_contri_DT, 
                   aes(x=fund_per_city, 
                       y=reorder(primary_city, fund_per_city)))+
@@ -58,23 +71,28 @@ HC_graph</code></pre>
 DT_graph</code></pre>
 <p><img src="/blogs/US_elections_files/figure-html/DT_graph-1.png" width="648" style="display: block; margin: auto;" /></p>
 </div>
+</div>
 <div id="joining-both-plots" class="section level2">
 <h2>Joining both plots</h2>
 <pre class="r"><code>HC_graph+DT_graph+
   plot_annotation(title = &quot;Where did candidates raise most money&quot;)</code></pre>
 <p><img src="/blogs/US_elections_files/figure-html/load_CA_data_2-1.png" width="648" style="display: block; margin: auto;" /></p>
 </div>
-<div id="bidens-approval-margins" class="section level2">
-<h2>Biden’s Approval Margins</h2>
-<pre class="r"><code>approval_polllist &lt;- read.csv(&#39;https://projects.fivethirtyeight.com/biden-approval-data/approval_polllist.csv&#39;) 
-
-approval_polllist &lt;- approval_polllist %&gt;% 
+</div>
+<div id="bidens-approval-margins" class="section level1">
+<h1>Biden’s Approval Margins</h1>
+<pre class="r"><code>approval_polllist &lt;- read.csv(&#39;https://projects.fivethirtyeight.com/biden-approval-data/approval_polllist.csv&#39;) </code></pre>
+<div id="change-the-format-of-the-date" class="section level2">
+<h2>Change the format of the date</h2>
+<pre class="r"><code>approval_polllist &lt;- approval_polllist %&gt;% 
   mutate(enddate = mdy(enddate), 
          year = year(enddate),
          month = month(enddate), #default format in r is year ymd
-         week = isoweek(enddate)) # using lubridate to change the format of the dates. 
-
-approval_polllist&lt;- approval_polllist%&gt;%
+         week = isoweek(enddate)) # using lubridate to change the format of the dates. </code></pre>
+</div>
+<div id="creating-a-95-confidence-interval" class="section level2">
+<h2>Creating a 95% Confidence Interval</h2>
+<pre class="r"><code>approval_polllist&lt;- approval_polllist%&gt;%
   filter(year == 2022) %&gt;% # filter to remove all other years other than 2022.
   group_by(week, subgroup) %&gt;% # grouping by week then subgroup, so that we can conitnue analysis
   summarise(app_disapp = approve-disapprove, #finding the net ratings
@@ -86,8 +104,24 @@ approval_polllist&lt;- approval_polllist%&gt;%
           margin_of_error = t_critical*se_approve_disapp,  
           rating_low = mean_approve_disapprove - margin_of_error, # make our ribbon bands
           rating_high = mean_approve_disapprove+ margin_of_error 
-         )
-
-ggplot(approval_polllist, aes(x=week, y=mean_approve_disapprove))+geom_ribbon(aes( ymax = rating_high, ymin=rating_low, fill = subgroup))+ geom_line()+ facet_grid(rows = vars(subgroup)) + labs(x = &#39;Week in 2022&#39;, y =&#39;&#39;, title = &quot;Biden&#39;s Net Approval Ratings in 2022&quot;, subtitle = &quot;Weekly Data, Approve - Disapprove, %&quot;)+ylim(-25,-5)+xlim(0,35)</code></pre>
-<p><img src="/blogs/US_elections_files/figure-html/Biden-1.png" width="648" style="display: block; margin: auto;" /></p>
+         )</code></pre>
+</div>
+<div id="bidens-net-approval-ratings-in-2022" class="section level2">
+<h2>Biden’s Net Approval Ratings in 2022</h2>
+<pre class="r"><code>ggplot(approval_polllist, aes(x=week, 
+                              y=mean_approve_disapprove))+
+  geom_ribbon(aes( ymax = rating_high, 
+                   ymin=rating_low, 
+                   fill = subgroup))+
+  geom_line()+
+  facet_grid(rows = vars(subgroup)) + 
+  labs(x = &#39;Week in 2022&#39;, 
+       y =&#39;&#39;, 
+       title = &quot;Biden&#39;s Net Approval Ratings in 2022&quot;, 
+       subtitle = &quot;Weekly Data, Approve - Disapprove, %&quot;)+
+  ylim(-25,-5)+
+  xlim(0,35)</code></pre>
+<p><img src="/blogs/US_elections_files/figure-html/unnamed-chunk-2-1.png" width="648" style="display: block; margin: auto;" /></p>
+<p>```</p>
+</div>
 </div>

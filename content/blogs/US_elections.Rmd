@@ -50,10 +50,8 @@ library(openintro)
 library(patchwork)
 ```
 
-## R Markdown
 
-
-## Including Plots
+# Hilary Clinton and Donal Trump
 
 ```{r, load_CA_data, warnings= FALSE, message=FALSE}
 # Make sure you use vroom() as it is significantly faster than read.csv()
@@ -63,6 +61,9 @@ zipcodes<- vroom::vroom(here::here("data","zip_code_database.csv"))
 
 ```
 
+## Hilary Clinton
+
+### Assignment of Variables
 ```{r}
 
 CA_contributions$zip<- as.character(CA_contributions$zip)
@@ -71,6 +72,7 @@ CA_contributions_2016 <- left_join(CA_contributions, zipcodes, by="zip")
 
 ```
 
+### Filtering for Hilarry Clinton
 ```{r contri_HC}
 CA_contri_HC<- CA_contributions_2016 %>% 
   filter(contb_date>"2015-12-31", cand_nm == c("Clinton, Hillary Rodham" )) %>% 
@@ -80,6 +82,7 @@ CA_contri_HC<- CA_contributions_2016 %>%
   slice_max(order_by = fund_per_city, n=10) 
 ```
 
+### Plot of Hilary CLinton's fund per city
 ```{r HC_graph}
 HC_graph<- ggplot(CA_contri_HC, 
                   aes(x=fund_per_city, 
@@ -93,6 +96,7 @@ HC_graph
 ```
 
 
+## Donald Trump
 ```{r contri_DT}
 CA_contri_DT<- CA_contributions_2016 %>% 
   filter(contb_date>"2015-12-31", cand_nm == c("Trump, Donald J.")) %>% 
@@ -102,6 +106,7 @@ CA_contri_DT<- CA_contributions_2016 %>%
   slice_max(order_by = fund_per_city, n=10)
 ```
 
+### Plot of Donald Trump's fund per city
 ```{r DT_graph}
 
 DT_graph<- ggplot(CA_contri_DT, 
@@ -121,17 +126,23 @@ HC_graph+DT_graph+
   plot_annotation(title = "Where did candidates raise most money")
 ```
 
-## Biden's Approval Margins 
+# Biden's Approval Margins 
 
 ```{r Biden, cache=TRUE}
 approval_polllist <- read.csv('https://projects.fivethirtyeight.com/biden-approval-data/approval_polllist.csv') 
+```
 
+## Change the format of the date
+```{r lubridate}
 approval_polllist <- approval_polllist %>% 
   mutate(enddate = mdy(enddate), 
          year = year(enddate),
          month = month(enddate), #default format in r is year ymd
          week = isoweek(enddate)) # using lubridate to change the format of the dates. 
+```
 
+## Creating a 95% Confidence Interval
+```{r t distribution}
 approval_polllist<- approval_polllist%>%
   filter(year == 2022) %>% # filter to remove all other years other than 2022.
   group_by(week, subgroup) %>% # grouping by week then subgroup, so that we can conitnue analysis
@@ -145,7 +156,25 @@ approval_polllist<- approval_polllist%>%
           rating_low = mean_approve_disapprove - margin_of_error, # make our ribbon bands
           rating_high = mean_approve_disapprove+ margin_of_error 
          )
+```
 
-ggplot(approval_polllist, aes(x=week, y=mean_approve_disapprove))+geom_ribbon(aes( ymax = rating_high, ymin=rating_low, fill = subgroup))+ geom_line()+ facet_grid(rows = vars(subgroup)) + labs(x = 'Week in 2022', y ='', title = "Biden's Net Approval Ratings in 2022", subtitle = "Weekly Data, Approve - Disapprove, %")+ylim(-25,-5)+xlim(0,35)
+## Biden's Net Approval Ratings in 2022
+```{r}
+ggplot(approval_polllist, aes(x=week, 
+                              y=mean_approve_disapprove))+
+  geom_ribbon(aes( ymax = rating_high, 
+                   ymin=rating_low, 
+                   fill = subgroup))+
+  geom_line()+
+  facet_grid(rows = vars(subgroup)) + 
+  labs(x = 'Week in 2022', 
+       y ='', 
+       title = "Biden's Net Approval Ratings in 2022", 
+       subtitle = "Weekly Data, Approve - Disapprove, %")+
+  ylim(-25,-5)+
+  xlim(0,35)
+```
+
+
 
 ```
