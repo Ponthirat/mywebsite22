@@ -88,11 +88,11 @@ params:
         title: Tempus
         url: blogs/tempus
       - image: avengers.jpg
-        subtitle: Lorem Etiam Nullam
+        subtitle: Analysis of IMDB dataset
         title: IMDB dataset
         url: blogs/IMDB
       - image: elections.jpg
-        subtitle: Nisl Sed Aliquam
+        subtitle: Analysis of past US elections
         title: Elections in the US
         url: blogs/US
       - image: pic05.jpg
