@@ -91,7 +91,7 @@ params:
         subtitle: Lorem Etiam Nullam
         title: IMDB dataset
         url: blogs/IMDB
-      - image: pic04.jpg
+      - image: elections.jpg
         subtitle: Nisl Sed Aliquam
         title: Elections in the US
         url: blogs/US
