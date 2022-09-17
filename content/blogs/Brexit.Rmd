@@ -1,0 +1,97 @@
+---
+categories:  
+- ""    #the front matter should be like the one found in, e.g., blog2.md. It cannot be like the normal Rmd we used
+- ""
+date: "2021-09-30"
+description: Analysis of US elections # the title that will show up once someone gets to this page
+draft: false
+image: spices.jpg # save picture in \static\img\blogs. Acceptable formats= jpg, jpeg, or png . Your iPhone pics wont work
+
+keywords: ""
+slug: Brexit # slug is the shorthand URL address... no spaces plz
+title: Brexit Dataset
+---
+
+```{r, setup, echo=FALSE}
+knitr::opts_chunk$set(
+  message = FALSE, 
+  warning = FALSE, 
+  tidy=FALSE,     # display code as typed
+  size="small")   # slightly smaller font for code
+options(digits = 3)
+# default figure size
+knitr::opts_chunk$set(
+  fig.width=6.75, 
+  fig.height=6.75,
+  fig.align = "center"
+)
+```
+
+
+```{r load-libraries, warning=FALSE, message=FALSE, echo=FALSE}
+library(tidyverse)  # Load ggplot2, dplyr, and all the other tidyverse packages
+library(lubridate)
+library(here)
+library(skimr)
+library(janitor)
+library(vroom)
+library(tidyquant)
+library(rvest)    # scrape websites
+library(purrr)  
+library(lubridate) #to handle dates
+library(ggrepel)
+library(tidyverse)  # Load ggplot2, dplyr, and all the other tidyverse packages
+library(mosaic)
+library(ggthemes)
+library(GGally)
+library(readxl)
+library(broom)
+library(infer)
+library(openintro)
+library(patchwork)
+```
+
+## Load Data
+
+```{r}
+#load brexit data
+brexit <- read_csv(here::here("data", "brexit_results.csv"))
+skim(brexit)
+```
+## Cleaning Data
+```{r}
+brexit <- brexit %>% 
+  rename(Conservative=con_2015, 
+         Labour = lab_2015, 
+         Lib_Dems = ld_2015, 
+         UKIP = ukip_2015)
+brexit 
+  
+```
+## Pivot Data Longer
+```{r}
+brexit2<- brexit %>% 
+  pivot_longer(cols=c('Conservative', 'Labour','Lib_Dems', 'UKIP'),
+                    names_to='parties',
+                    values_to='parties_share')
+brexit2
+```
+
+## Plot
+```{r brexit_challenge, fig.height=5, fig.width=8}
+#knitr::include_graphics(here::here("images", "brexit.png"), error = FALSE)
+#transferring the data into long format instead of wide
+
+#plot the data
+ggplot(brexit2, 
+       aes(x =parties_share, 
+           y=leave_share, 
+           color = parties))+
+  geom_point()+
+  geom_smooth(method=lm)+ 
+  scale_color_manual(breaks = c('Labour','Conservative', 'Lib_Dems', 'UKIP'),
+                        values=c("#aa1619", "#3284bf","#ebbf58","#e2e039"))+
+  labs(x = "Party % in the UK 2015 general election")+
+  labs( y = "Leave % in the 2016 Brexit Referendum")+
+  ggtitle("How polital affiliation translated to Brexit voting")
+```
