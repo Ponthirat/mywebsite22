@@ -95,10 +95,10 @@ params:
         subtitle: Analysis of past US elections
         title: Elections in the US
         url: blogs/US
-      - image: pic05.jpg
-        subtitle: Wait and See
-        title: Project
-        url: blogs/ipsum
+      - image: finance.jpg
+        subtitle: We analysed stocks in the NYSE market
+        title: Financial Stock Analysis
+        url: blogs/Financial
       - image: pic06.jpg
         subtitle: Wait and See
         title: Project
